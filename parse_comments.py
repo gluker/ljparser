@@ -17,7 +17,15 @@ def parse_comments(post_url):
         "comments" : '//div[@class="b-leaf-article"]', 
         "collapsed_links" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]/div/div/div[2]/ul/li[2]/a/attribute::href",
         "usernames" : "//div[contains(concat(' ',@class,' '),' p-comment ')][@data-full='1']/attribute::data-username",
-    }}
+    },
+    "rabota":{
+        "dates" : "//small/span/text()",
+        "links" : "//strong/a/attribute::href",
+        "comments": "//div[@class='ljcmt_full']/div[2]",
+        "collapsed_links" : "//div[starts-with(@id,'ljcmt')][not (@class='ljcmt_full')]/a/attribute::href",
+        "usernames" : "//div[@class='ljcmt_full']/*//a/b/text()"
+        }}
+    
     def get_from_url(url,dic):
         url = url.split("#")[0]
         if '?' not in url:
