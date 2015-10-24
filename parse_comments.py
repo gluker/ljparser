@@ -80,7 +80,7 @@ def parse_comments(post_url):
         get_from_url(nxt,comments)
         prev = nxt
         nxt = first_unloaded(comments)
-        assert nxt_old != nxt #we stuck
+        assert prev != nxt #we stuck
         if nxt is None:
             break
         sleep(1)
