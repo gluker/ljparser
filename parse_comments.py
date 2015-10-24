@@ -4,21 +4,22 @@ import requests
 import re
 
 def parse_comments(post_url):
-    markup = {"html-s2-no-adaptive":{
+    markup = {
+    "//div[@id='container'][@class='ng-scope']":{
         "dates" : "//abbr/span/text()",
         "links" : "//a[@class='permalink']/attribute::href",
         "comments" : "//div[contains(concat(' ',@class,' '),' comment-body ')]",
         "collapsed_links" : "//a[@class='collapsed-comment-link']/attribute::href",
         "usernames" : "//span[@class='commenter-name']/span/attribute::data-ljuser",
     },
-    "html-schemius html-adaptive":{
+    "//html[@class='html-schemius html-adaptive']":{
         "dates" : '//span[@class="b-leaf-createdtime"]/text()', 
         "links" : '//a[@class="b-leaf-permalink"]/attribute::href', 
         "comments" : '//div[@class="b-leaf-article"]', 
         "collapsed_links" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]/div/div/div[2]/ul/li[2]/a/attribute::href",
         "usernames" : "//div[contains(concat(' ',@class,' '),' p-comment ')][@data-full='1']/attribute::data-username",
     },
-    "rabota":{
+    "//div[@align='center']/table[@id='topbox']":{
         "dates" : "//small/span/text()",
         "links" : "//strong/a/attribute::href",
         "comments": "//div[@class='ljcmt_full']/div[2]",
@@ -35,8 +36,10 @@ def parse_comments(post_url):
         
         page = requests.get(url)
         tree = html.fromstring(page.text)
-        html_class = tree.xpath("/html/attribute::class")[0]
-        xp = markup[html_class]
+        for u in markup.keys():
+            if len(tree.xpath(u))>0:
+                xp = markup[u]
+                break
         cid_pattern = re.compile("[0-9]+$")
         dates = tree.xpath(xp["dates"])
         links = tree.xpath(xp["links"])
