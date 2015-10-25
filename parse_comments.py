@@ -1,4 +1,3 @@
-from time import sleep
 from lxml import html
 import requests
 import re
@@ -83,7 +82,6 @@ def parse_comments(post_url):
         assert prev != nxt #we stuck
         if nxt is None:
             break
-        sleep(1)
     return comments
 
 if __name__ == "__main__":
