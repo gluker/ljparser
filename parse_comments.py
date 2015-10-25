@@ -34,6 +34,8 @@ def parse_comments(post_url):
             url=url[:url.index("?")+1]+"nojs=1&"+url[url.index("?")+1:]
         
         page = requests.get(url)
+        assert page.status_code == 200
+        assert "<title>LiveJournal Bot Policy</title>" not in page.text
         tree = html.fromstring(page.text)
         for u in markup.keys():
             if len(tree.xpath(u))>0:
