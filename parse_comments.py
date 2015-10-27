@@ -23,7 +23,7 @@ def parse_comments(post_url):
         "links" : "//strong/a/attribute::href",
         "comments": "//div[@class='ljcmt_full']/div[2]",
         "collapsed_links" : "//div[starts-with(@id,'ljcmt')][not (@class='ljcmt_full')]/a/attribute::href",
-        "usernames" : "//div[@class='ljcmt_full']/*//a/b/text()"
+        "usernames" : "//td/span/a/b/text()"
         }}
     
     def get_from_url(p_url,dic):
@@ -49,7 +49,6 @@ def parse_comments(post_url):
         comments = tree.xpath(xp["comments"])
 
         assert all([len(l) == len(dates) for l in [links,usernames,comments]])
-        
         for i in range(len(links)):
             cid = re.findall(cid_pattern,links[i])[0]
             if cid not in dic or not dic[cid]["full"]:
@@ -76,8 +75,7 @@ def parse_comments(post_url):
     def first_unloaded(dic):
         for c in dic:
             try:
-                if not dic[c]["full"]:
-                    if not dic[c]["link"] in dic['visited']:
+                if not dic[c]["full"] and not dic[c]["link"] in dic['visited']:
                         return dic[c]["link"]
             except:
                 pass
@@ -101,4 +99,3 @@ if __name__ == "__main__":
     from json import dumps
     cmnts = parse_comments(argv[1])
     print (dumps(cmnts))
-
