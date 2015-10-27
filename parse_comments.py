@@ -15,7 +15,7 @@ def parse_comments(post_url):
         "dates" : '//span[@class="b-leaf-createdtime"]/text()', 
         "links" : '//a[@class="b-leaf-permalink"]/attribute::href', 
         "comments" : '//div[@class="b-leaf-article"]', 
-        "collapsed_links" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]/div/div/div[2]/ul/li[2]/a/attribute::href",
+        "collapsed_links" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]/div/div/div[2]/ul/li[2]/a/attribute::href | //div[contains(concat(' ',@class,' '),' b-leaf-seemore-width ')]/div/span[1]/a/attribute::href",
         "usernames" : "//div[contains(concat(' ',@class,' '),' p-comment ')][@data-full='1']/attribute::data-username",
     },
     "//div[@align='center']/table[@id='topbox']":{
@@ -26,8 +26,8 @@ def parse_comments(post_url):
         "usernames" : "//div[@class='ljcmt_full']/*//a/b/text()"
         }}
     
-    def get_from_url(url,dic):
-        url = url.split("#")[0]
+    def get_from_url(p_url,dic):
+        url = p_url.split("#")[0]
         if '?' not in url:
             url += "?nojs=1"
         else:
@@ -60,6 +60,11 @@ def parse_comments(post_url):
                     "username" : usernames[i],
                     "full" : True
                 }
+        links.append(p_url)
+        try:
+            dic['visited'].update(set(links))
+        except:
+            dic['visited'] = set(links)
         for link in collapsed_links:
             cid = re.findall(cid_pattern,link)[0]
             if cid not in dic:
@@ -70,8 +75,12 @@ def parse_comments(post_url):
 
     def first_unloaded(dic):
         for c in dic:
-            if not dic[c]["full"]:
-                return dic[c]["link"]
+            try:
+                if not dic[c]["full"]:
+                    if not dic[c]["link"] in dic['visited']:
+                        return dic[c]["link"]
+            except:
+                pass
         return None
 
     comments = {}
@@ -84,10 +93,12 @@ def parse_comments(post_url):
         assert prev != nxt #we stuck
         if nxt is None:
             break
+    del comments['visited']
     return comments
 
 if __name__ == "__main__":
     from sys import argv
     from json import dumps
-    print (dumps(parse_comments(argv[1])))
+    cmnts = parse_comments(argv[1])
+    print (dumps(cmnts))
 
