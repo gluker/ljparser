@@ -4,7 +4,7 @@ import re
 
 def parse_comments(post_url):
     markup = {
-    "//div[@id='container'][@class='ng-scope']":{
+    "//div[@id='container']":{
         "dates" : "//abbr/span/text()",
         "links" : "//a[@class='permalink']/attribute::href",
         "comments" : "//div[contains(concat(' ',@class,' '),' comment-body ')]",
