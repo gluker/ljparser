@@ -1,101 +1,89 @@
+#!/usr/bin/python
 from lxml import html
 import requests
 import re
 
-def parse_comments(post_url):
-    markup = {
-    "//div[@id='container']":{
-        "dates" : "//abbr/span/text()",
-        "links" : "//a[@class='permalink']/attribute::href",
-        "comments" : "//div[contains(concat(' ',@class,' '),' comment-body ')]",
-        "collapsed_links" : "//a[@class='collapsed-comment-link']/attribute::href",
-        "usernames" : "//span[@class='commenter-name']/span/attribute::data-ljuser",
-    },
-    "//html[@class='html-schemius html-adaptive']":{
-        "dates" : '//span[@class="b-leaf-createdtime"]/text()', 
-        "links" : '//a[@class="b-leaf-permalink"]/attribute::href', 
-        "comments" : '//div[@class="b-leaf-article"]', 
-        "collapsed_links" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]/div/div/div[2]/ul/li[2]/a/attribute::href | //div[contains(concat(' ',@class,' '),' b-leaf-seemore-width ')]/div/span[1]/a/attribute::href",
-        "usernames" : "//div[contains(concat(' ',@class,' '),' p-comment ')][@data-full='1']/attribute::data-username",
-    },
-    "//div[@align='center']/table[@id='topbox']":{
-        "dates" : "//small/span/text()",
-        "links" : "//strong/a/attribute::href",
-        "comments": "//div[@class='ljcmt_full']/div[2]",
-        "collapsed_links" : "//div[starts-with(@id,'ljcmt')][not (@class='ljcmt_full')]/a/attribute::href",
-        "usernames" : "//td/span/a/b/text()"
-        }}
+markup = {
+"//div[@id='container']":{
+    "dates" : "//abbr/span/text()",
+    "links" : "//a[@class='permalink']/attribute::href",
+    "comments" : "//div[contains(concat(' ',@class,' '),' comment-body ')]",
+    "collapsed_links" : "//a[@class='collapsed-comment-link']/attribute::href",
+    "usernames" : "//span[@class='commenter-name']/span/attribute::data-ljuser",
+},
+"//html[@class='html-schemius html-adaptive']":{
+    "dates" : '//span[@class="b-leaf-createdtime"]/text()', 
+    "links" : '//a[@class="b-leaf-permalink"]/attribute::href', 
+    "comments" : '//div[@class="b-leaf-article"]', 
+    "collapsed_links" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]"+
+        "/div/div/div[2]/ul/li[2]/a/attribute::href"+
+        " | //span[@class='b-leaf-seemore-more']/a/attribute::href",
+    "usernames" : "//div[contains(concat(' ',@class,' '),' p-comment ')][@data-full='1']/attribute::data-username",
+},
+"//div[@align='center']/table[@id='topbox']":{
+    "dates" : "//small/span/text()",
+    "links" : "//strong/a/attribute::href",
+    "comments": "//div[@class='ljcmt_full']/div[2]",
+    "collapsed_links" : "//div[starts-with(@id,'ljcmt')][not (@class='ljcmt_full')]/a/attribute::href",
+    "usernames" : "//td/span/a/b/text()"
+    }}
+
+def tree_from_url(p_url):
+    url = p_url.split("#")[0]
+    if '?' not in url:
+        url += "?nojs=1"
+    else:
+        url=url[:url.index("?")+1]+"nojs=1&"+url[url.index("?")+1:]
+    page = requests.get(url)
+    assert page.status_code == 200
+    assert "<title>LiveJournal Bot Policy</title>" not in page.text
+    return  html.fromstring(page.text)
     
-    def get_from_url(p_url,dic):
-        url = p_url.split("#")[0]
-        if '?' not in url:
-            url += "?nojs=1"
-        else:
-            url=url[:url.index("?")+1]+"nojs=1&"+url[url.index("?")+1:]
-        
-        page = requests.get(url)
-        assert page.status_code == 200
-        assert "<title>LiveJournal Bot Policy</title>" not in page.text
-        tree = html.fromstring(page.text)
-        for u in markup.keys():
-            if len(tree.xpath(u))>0:
-                xp = markup[u]
-                break
-        cid_pattern = re.compile("[0-9]+$")
-        dates = tree.xpath(xp["dates"])
-        links = tree.xpath(xp["links"])
-        usernames = tree.xpath(xp["usernames"])
-        collapsed_links = tree.xpath(xp["collapsed_links"])
-        comments = tree.xpath(xp["comments"])
-
-        assert all([len(l) == len(dates) for l in [links,usernames,comments]])
-        for i in range(len(links)):
-            cid = re.findall(cid_pattern,links[i])[0]
-            if cid not in dic or not dic[cid]["full"]:
-                dic[cid] = {
-                    "link" : links[i],
-                    "date" : dates[i],
-                    "text" : comments[i].text_content(),
-                    "username" : usernames[i],
-                    "full" : True
-                }
-        links.append(p_url)
-        try:
-            dic['visited'].update(set(links))
-        except:
-            dic['visited'] = set(links)
-        for link in collapsed_links:
-            cid = re.findall(cid_pattern,link)[0]
-            if cid not in dic:
-                dic[cid] = {
-                    "link" : link,
-                    "full" : False
-                }
-
-    def first_unloaded(dic):
-        for c in dic:
-            try:
-                if not dic[c]["full"] and not dic[c]["link"] in dic['visited']:
-                        return dic[c]["link"]
-            except:
-                pass
-        return None
-
-    comments = {}
-    nxt = post_url
-    prev = ""
-    while True:
-        get_from_url(nxt,comments)
-        prev = nxt
-        nxt = first_unloaded(comments)
-        assert prev != nxt #we stuck
-        if nxt is None:
+def parse_tree(tree):
+    for u in markup.keys():
+        if len(tree.xpath(u))>0:
+            xp = markup[u]
             break
-    del comments['visited']
+    cid_pattern = re.compile("[0-9]+$")
+    dates = tree.xpath(xp["dates"])
+    links = tree.xpath(xp["links"])
+    usernames = tree.xpath(xp["usernames"])
+    collapsed_links = tree.xpath(xp["collapsed_links"])
+    comments = tree.xpath(xp["comments"])
+    dic = {}
+    assert all([len(l) == len(dates) for l in [links,usernames,comments]])
+    for i in range(len(links)):
+        cid = re.findall(cid_pattern,links[i])[0]
+        dic[cid] = {
+            "link" : links[i],
+            "date" : dates[i],
+            "text" : comments[i].text_content(),
+            "username" : usernames[i],
+        }
+    return dic, links, collapsed_links
+
+def search_in_url(url):
+    visited = set()
+    loaded = set()
+    unloaded = set()
+    unloaded.add(url)
+    comments = {}
+    while len(unloaded)>0:
+        url = unloaded.pop()
+        print(url)
+        tree = tree_from_url(url)
+        visited.add(url)
+        c,l,u = parse_tree(tree)
+        comments.update(c)
+        loaded.update(l)
+        unloaded.update(u)
+        unloaded.difference_update(visited)
+        print (len(unloaded))
     return comments
 
 if __name__ == "__main__":
     from sys import argv
     from json import dumps
-    cmnts = parse_comments(argv[1])
-    print (dumps(cmnts))
+    cmnts = search_in_url(argv[1])
+    print (len(cmnts))
+    
