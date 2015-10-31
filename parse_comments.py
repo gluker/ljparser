@@ -60,7 +60,6 @@ def parse_tree(tree):
             "text" : comments[i].text_content(),
             "username" : usernames[i],
         }
-    
     try:
         for link in tree.xpath(xp["to_visit"]):
             collapsed_links.append(link.split("#")[0])
@@ -68,29 +67,35 @@ def parse_tree(tree):
         pass
     return dic, links, collapsed_links
 
-def search_in_url(url):
+def search_in_url(post_url):
     visited = set()
     loaded = set()
     unloaded = set()
-    unloaded.add(url)
+    unloaded.add(post_url)
     comments = {}
-    while len(unloaded)>0:
-        url = unloaded.pop()
-        print(url)
-        tree = tree_from_url(url)
-        visited.add(url)
-        c,l,u = parse_tree(tree)
-        comments.update(c)
-        loaded.update(l)
-        unloaded.update(u)
-        unloaded.difference_update(visited)
-        unloaded.difference_update(loaded)
-        print (len(unloaded))
+    c_len_old = 0
+    page = 2
+    while True:
+        while len(unloaded)>0:
+            url = unloaded.pop()
+            tree = tree_from_url(url)
+            visited.add(url)
+            c,l,u = parse_tree(tree)
+            comments.update(c)
+            loaded.update(l)
+            unloaded.update(u)
+            unloaded.difference_update(visited)
+            unloaded.difference_update(loaded)
+        c_len = len(comments)
+        if c_len == c_len_old:
+            break
+        c_len_old = c_len
+        unloaded.add(post_url+"?page="+str(page))
+        page+=1
     return comments
 
 if __name__ == "__main__":
     from sys import argv
     from json import dumps
     cmnts = search_in_url(argv[1])
-    print (len(cmnts))
-    
+    print (dumps(cmnts))
