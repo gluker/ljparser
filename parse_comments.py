@@ -16,9 +16,9 @@ markup = {
     "links" : '//a[@class="b-leaf-permalink"]/attribute::href', 
     "comments" : '//div[@class="b-leaf-article"]', 
     "collapsed_links" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]"+
-        "/div/div/div[2]/ul/li[2]/a/attribute::href"+
-        " | //span[@class='b-leaf-seemore-more']/a/attribute::href",
+        "/div/div/div[2]/ul/li[2]/a/attribute::href",
     "usernames" : "//div[contains(concat(' ',@class,' '),' p-comment ')][@data-full='1']/attribute::data-username",
+    "to_visit": "//span[@class='b-leaf-seemore-more']/a/attribute::href",
 },
 "//div[@align='center']/table[@id='topbox']":{
     "dates" : "//small/span/text()",
@@ -60,6 +60,12 @@ def parse_tree(tree):
             "text" : comments[i].text_content(),
             "username" : usernames[i],
         }
+    
+    try:
+        for link in tree.xpath(xp["to_visit"]):
+            collapsed_links.append(link.split("#")[0])
+    except:
+        pass
     return dic, links, collapsed_links
 
 def search_in_url(url):
@@ -78,6 +84,7 @@ def search_in_url(url):
         loaded.update(l)
         unloaded.update(u)
         unloaded.difference_update(visited)
+        unloaded.difference_update(loaded)
         print (len(unloaded))
     return comments
 
