@@ -52,14 +52,11 @@ def parse_tree(tree):
     comments = tree.xpath(xp["comments"])
     dic = {}
     assert all([len(l) == len(dates) for l in [links,usernames,comments]])
-    for i in range(len(links)):
-        cid = re.findall(cid_pattern,links[i])[0]
-        dic[cid] = {
-            "link" : links[i],
-            "date" : dates[i],
-            "text" : comments[i].text_content(),
-            "username" : usernames[i],
-        }
+    fields = ["link","date","text","username"]
+    for link,date,text,username in zip(links,dates,comments,usernames):
+        cid = cid_pattern.findall(link)[0]
+        dic[cid] = dict(zip(fields,[link,date,text.text_content(),username]))
+
     try:
         for link in tree.xpath(xp["to_visit"]):
             collapsed_links.append(link.split("#")[0])
