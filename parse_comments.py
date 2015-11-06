@@ -37,7 +37,7 @@ def tree_from_url(p_url):
     page = requests.get(url)
     assert page.status_code == 200
     assert "<title>LiveJournal Bot Policy</title>" not in page.text
-    return  html.fromstring(page.text)
+    return  html.fromstring(page.text.replace('<',' <'))
     
 def parse_tree(tree):
     for u in markup.keys():
