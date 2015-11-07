@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 from lxml import html
 import requests
 import re
