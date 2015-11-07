@@ -37,7 +37,7 @@ def tree_from_url(p_url):
     page = requests.get(url)
     assert page.status_code == 200
     assert "<title>LiveJournal Bot Policy</title>" not in page.text
-    return  html.fromstring(page.text.replace('<',' <'))
+    return  html.fromstring(page.text)
     
 def parse_tree(tree):
     for u in markup.keys():
@@ -50,12 +50,13 @@ def parse_tree(tree):
     usernames = tree.xpath(xp["usernames"])
     collapsed_links = tree.xpath(xp["collapsed_links"])
     comments = tree.xpath(xp["comments"])
+    comments = [" ".join(c.xpath(".//text()")) for c in comments]
     dic = {}
     assert all([len(l) == len(dates) for l in [links,usernames,comments]])
     fields = ["link","date","text","username"]
     for link,date,text,username in zip(links,dates,comments,usernames):
         cid = cid_pattern.findall(link)[0]
-        dic[cid] = dict(zip(fields,[link,date,text.text_content(),username]))
+        dic[cid] = dict(zip(fields,[link,date,text,username]))
 
     try:
         for link in tree.xpath(xp["to_visit"]):
