@@ -49,10 +49,10 @@ def parse_tree(tree):
     links = tree.xpath(xp["links"])
     usernames = tree.xpath(xp["usernames"])
     collapsed_links = tree.xpath(xp["collapsed_links"])
-    comments = tree.xpath(xp["comments"])
-    comments = [" ".join(c.xpath(".//text()")) for c in comments]
+    comments_list = tree.xpath(xp["comments"])
+    assert all([len(l) == len(dates) for l in [links,usernames,comments_list]])
+    comments = map(lambda c:" ".join(c.xpath(".//text()")), comments_list)
     dic = {}
-    assert all([len(l) == len(dates) for l in [links,usernames,comments]])
     fields = ["link","date","text","username"]
     for link,date,text,username in zip(links,dates,comments,usernames):
         cid = cid_pattern.findall(link)[0]
