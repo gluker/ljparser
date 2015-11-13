@@ -5,27 +5,34 @@ import re
 
 markup = {
 "//div[@id='container']":{
-    "dates" : "//abbr/span/text()",
-    "links" : "//a[@class='permalink']/attribute::href",
-    "comments" : "//div[contains(concat(' ',@class,' '),' comment-body ')]",
-    "collapsed_links" : "//a[@class='collapsed-comment-link']/attribute::href",
-    "usernames" : "//span[@class='commenter-name']/span/attribute::data-ljuser",
+    'blocks' : '//div[contains(concat(" ",@class," ")," comment ")]',
+    "link" : ".//a[@class='permalink']/attribute::href",
+    "date" : ".//abbr/span/text()",
+    "text" : ".//div[contains(concat(' ',@class,' '),' comment-body ')]//text()",
+    "user" : ".//span[@class='commenter-name']/span/attribute::data-ljuser",
+    "subject" : ".//div[@class='comment-subject']/text()",
+    "collapsed" : "//a[@class='collapsed-comment-link']/attribute::href",
 },
 "//html[@class='html-schemius html-adaptive']":{
-    "dates" : '//span[@class="b-leaf-createdtime"]/text()', 
-    "links" : '//a[@class="b-leaf-permalink"]/attribute::href', 
-    "comments" : '//div[@class="b-leaf-article"]', 
-    "collapsed_links" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]"+
+    'blocks' : '//div[contains(concat(" ",@class," ")," comment ")'+
+            'and not(contains(concat(" ",@class," ")," b-leaf-collapsed "))]',
+    'link' : './/a[@class="b-leaf-permalink"]/attribute::href', 
+    'date' : './/span[@class="b-leaf-createdtime"]/text()', 
+    'text' : './/div[@class="b-leaf-article"]//text()', 
+    'user' : './/span[@class="b-leaf-username-name"]//text()',
+    'subject' : './/h4[@class="b-leaf-subject"]//text()',
+    "collapsed" : "//div[contains(concat(' ',@class,' '),' b-leaf-collapsed ')]"+
         "/div/div/div[2]/ul/li[2]/a/attribute::href",
-    "usernames" : "//div[contains(concat(' ',@class,' '),' p-comment ')][@data-full='1']/attribute::data-username",
     "to_visit": "//span[@class='b-leaf-seemore-more']/a/attribute::href",
 },
 "//div[@align='center']/table[@id='topbox']":{
-    "dates" : "//small/span/text()",
-    "links" : "//strong/a/attribute::href",
-    "comments": "//div[@class='ljcmt_full']/div[2]",
-    "collapsed_links" : "//div[starts-with(@id,'ljcmt')][not (@class='ljcmt_full')]/a/attribute::href",
-    "usernames" : "//td/span/a/b/text()"
+    "blocks": "//div[@class='ljcmt_full']",
+    "link" : ".//strong/a/attribute::href",
+    "date" : ".//small/span/text()",
+    "text": "./div[2]//text()",
+    "user" : ".//td/span/a/b/text()",
+    "subject" : ".//td/h3/text()",
+    "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
     }}
 
 def tree_from_url(p_url):
@@ -41,31 +48,25 @@ def tree_from_url(p_url):
     
 def parse_tree(tree):
     for u, m in markup.items():
-        if len(tree.xpath(u))>0:
+        if tree.xpath(u):
             xp = m
             break
+    blocks = tree.xpath(xp['blocks'])
+    collapsed = tree.xpath(xp['collapsed'])
     cid_pattern = re.compile("[0-9]+$")
-    dates = tree.xpath(xp["dates"])
-    links = tree.xpath(xp["links"])
-    usernames = tree.xpath(xp["usernames"])
-    collapsed_links = tree.xpath(xp["collapsed_links"])
-    comments_list = tree.xpath(xp["comments"])
-    assert all([len(l) == len(dates) for l in [links,usernames,comments_list]]), \
-        "got {d} dates, {l} links, {u} usernames, and {c} comments".format(
-         d = len(dates), l = len(links), u = len(usernames), c = len(comments_list))
-    comments = map(lambda c:" ".join(c.xpath(".//text()")), comments_list)
-    dic = {}
-    fields = ["link","date","text","username"]
-    for link,date,text,username in zip(links,dates,comments,usernames):
-        cid = cid_pattern.findall(link)[0]
-        dic[cid] = dict(zip(fields,[link,date,text,username]))
-
+    fields = ['link','date','text','user','subject']
+    comments = {}
+    links = []
+    for block in blocks:
+        comment = dict(zip(fields,[' '.join(block.xpath(xp[f])).strip() for f in fields]))
+        comments[cid_pattern.findall(comment['link'])[0]] = comment
+        links.append(comment['link'])
     try:
         for link in tree.xpath(xp["to_visit"]):
-            collapsed_links.append(link.split("#")[0])
+            collapsed.append(link.split("#")[0])
     except:
         pass
-    return dic, links, collapsed_links
+    return comments, links, collapsed
 
 def search_in_url(post_url):
     visited = set()
@@ -76,7 +77,7 @@ def search_in_url(post_url):
     c_len_old = 0
     page = 2
     while True:
-        while len(unloaded)>0:
+        while unloaded:
             url = unloaded.pop()
             tree = tree_from_url(url)
             visited.add(url)
