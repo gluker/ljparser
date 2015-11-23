@@ -27,7 +27,7 @@ markup = {
 },
 "//div[@align='center']/table[@id='topbox']":{
     "blocks": "//div[@class='ljcmt_full']",
-    "link" : ".//strong/a/attribute::href",
+    "link" : ".//td[@class='social-links']/p/strong/a/attribute::href",
     "date" : ".//small/span/text()",
     "text": "./div[2]//text()",
     "user" : ".//td/span/a/b/text()",
