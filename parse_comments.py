@@ -34,6 +34,15 @@ markup = {
     "subject" : ".//td/h3/text()",
     "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
 },
+"//html[contains(@class, 'html-s2-no-adaptive')]":{
+    "blocks": '//div[starts-with(@id, "ljcmt")]',
+    "link" : ".//div[contains(@style, 'smaller')]/a[last()]/attribute::href",
+    "date" : ".//tr/td/span/text()",
+    "text": "./div[2]//text()",
+    "user" : ".//td/span/a/b/text()",
+    "subject" : ".//td/h3/text()",
+    "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
+},
 "//div[@class='bodyblock']":{
     "blocks": "//div[@class='ljcmt_full']",
     "link" : ".//div[@class='commentLinkbar']/ul/li[last()-1]/a/attribute::href",
@@ -42,7 +51,6 @@ markup = {
     "user" : ".//span[@class='ljuser']/span/attribute::data-ljuser",
     "subject" : ".//span[@class='commentHeaderSubject']/text()",
     "collapsed" : "//div[@class='commentHolder']/div[@class='commentText']/a/attribute::href",
-
 }}
 
 def tree_from_url(p_url):

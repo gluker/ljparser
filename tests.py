@@ -14,6 +14,7 @@ test_cases = [
     'http://potrebitel-il.livejournal.com/22338502.html',
     'http://rabota-il.livejournal.com/712789.html',
     'http://ladies-il.livejournal.com/7098073.html',
+    'http://bambik.livejournal.com/2417988.html',
     ]
 
 for case in test_cases:
