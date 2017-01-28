@@ -22,12 +22,12 @@ for case in test_cases:
     try:
         stable = oracle(case)
     except Exception as ex:
-        print("Oracle felt on {} with {}".format(case,ex))
+        print("Oracle failed on {} with {}".format(case,ex))
         break
     try:
         testing = parse_comments(case)
     except Exception as ex:
-        print("Test felt on {} with {}".format(case,ex))
+        print("Test failed on {} with {}".format(case,ex))
         break
     assert parse_comments(case) == oracle(case), "Results don't match"
 
