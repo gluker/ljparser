@@ -77,8 +77,9 @@ def parse_tree(tree):
     links = []
     for block in blocks:
         comment = dict(zip(fields,[' '.join(block.xpath(xp[f])).strip() for f in fields]))
-        comments[cid_pattern.findall(comment['link'])[0]] = comment
-        links.append(comment['link'])
+        if comment['link']:
+            comments[cid_pattern.findall(comment['link'])[0]] = comment
+            links.append(comment['link'])
     try:
         for link in tree.xpath(xp["to_visit"]):
             collapsed.append(link.split("#")[0])
