@@ -36,11 +36,11 @@ markup = {
 },
 "//html[contains(@class, 'html-s2-no-adaptive')]":{
     "blocks": '//div[starts-with(@id, "ljcmt")]',
-    "link" : ".//div[contains(@style, 'smaller')]/a[last()]/attribute::href",
-    "date" : ".//tr/td/span/text()",
+    "link" : ".//span[@class='comment-datetimelink']/a[last()]/attribute::href",
+    "date" : ".//span[@class='comment-datetimelink']/a/span/text()",
     "text": "./div[2]//text()",
-    "user" : ".//td/span/a/b/text()",
-    "subject" : ".//td/h3/text()",
+    "user" : ".//div[@class='comment-poster-info']/span/attribute::data-ljuser",
+    "subject" : ".//div[contains(concat(' ',@class,' '),' comment-head-in ')]/h3/text()",
     "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
 },
 "//div[@class='bodyblock']":{
