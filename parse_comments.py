@@ -141,5 +141,5 @@ def search_in_url(post_url, markup_index = None):
 if __name__ == "__main__":
     from sys import argv
     from json import dumps
-    cmnts = search_in_url(argv[1], int(argv[2]) if argv[2] else None)
+    cmnts = search_in_url(argv[1], int(argv[2]) if len(argv)>2 else None)
     print (dumps(cmnts))
