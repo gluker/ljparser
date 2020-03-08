@@ -3,8 +3,9 @@ from lxml import html
 import requests
 import re
 
-markup = {
-"//div[@id='container']":{
+
+markups = [
+{
     'blocks' : '//div[contains(concat(" ",@class," ")," comment ")]',
     "link" : ".//a[@class='permalink']/attribute::href",
     "date" : ".//abbr/span/text()",
@@ -13,7 +14,7 @@ markup = {
     "subject" : ".//div[@class='comment-subject']/text()",
     "collapsed" : "//a[@class='collapsed-comment-link']/attribute::href",
 },
-"//html[@class='html-schemius html-adaptive']":{
+{
     'blocks' : '//div[contains(concat(" ",@class," ")," comment ")'+
             'and not(contains(concat(" ",@class," ")," b-leaf-collapsed "))]',
     'link' : './/a[@class="b-leaf-permalink"]/attribute::href', 
@@ -25,7 +26,7 @@ markup = {
         "/div/div/div[2]/ul/li[2]/a/attribute::href",
     "to_visit": "//span[@class='b-leaf-seemore-more']/a/attribute::href",
 },
-"//div[@align='center']/table[@id='topbox']":{
+{
     "blocks": "//div[@class='ljcmt_full']",
     "link" : ".//td[@class='social-links']/p/strong/a/attribute::href",
     "date" : ".//small/span/text()",
@@ -34,16 +35,16 @@ markup = {
     "subject" : ".//td/h3/text()",
     "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
 },
-"//table[contains(@class, 'standard')]":{
+{
     "blocks": '//div[starts-with(@id, "ljcmt")]',
-        "link" : ".//div[contains(@style, 'smaller')]/a[last()]/attribute::href",
+    "link" : ".//div[contains(@style, 'smaller')]/a[last()]/attribute::href",
     "date" : ".//tr/td/span/text()",
     "text": "./div[2]//text()",
     "user" : ".//td/span/a/b/text()",
     "subject" : ".//td/h3/text()",
     "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
 },
-"//div[@class='bodyblock']":{
+{
     "blocks": "//div[@class='ljcmt_full']",
     "link" : ".//div[@class='commentLinkbar']/ul/li[last()-1]/a/attribute::href",
     "date" : ".//div[@class='commentHeader']/span[1]/text()",
@@ -52,7 +53,7 @@ markup = {
     "subject" : ".//span[@class='commentHeaderSubject']/text()",
     "collapsed" : "//div[@class='commentHolder']/div[@class='commentText']/a/attribute::href",
 },
-"//html[contains(@class, 'html-s2-no-adaptive')]":{
+{
     "blocks": '//div[starts-with(@id, "ljcmt")]',
     "link" : ".//span[@class='comment-datetimelink']/a[last()]/attribute::href",
     "date" : ".//span[@class='comment-datetimelink']/a/span/text()",
@@ -61,7 +62,16 @@ markup = {
     "subject" : ".//div[contains(concat(' ',@class,' '),' comment-head-in ')]/h3/text()",
     "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
 },
-}
+]
+
+markup_guess = [
+    "//div[@id='container']",
+    "//html[@class='html-schemius html-adaptive']",
+    "//div[@align='center']/table[@id='topbox']",
+    "//table[contains(@class, 'standard')]",
+    "//div[@class='bodyblock']",
+    "//html[contains(@class, 'html-s2-no-adaptive')]",
+]
 
 def tree_from_url(p_url):
     url = p_url.split("#")[0]
@@ -74,12 +84,15 @@ def tree_from_url(p_url):
     assert "<title>LiveJournal Bot Policy</title>" not in page.text, "Was banned by LJ"
     return  html.fromstring(page.text)
     
-def parse_tree(tree):
-    for u, m in markup.items():
+
+def guess_markup(tree):
+    for i, u in enumerate(markup_guess):
         if tree.xpath(u):
-            xp = m
-            print("chose " + u)
-            break
+            print("chose " + str(i))
+            return markups[i] 
+
+def parse_tree(tree, markup_index = None):
+    xp = markups[markup_index] if markup_index else guess_markup(tree)
     blocks = tree.xpath(xp['blocks'])
     collapsed = tree.xpath(xp['collapsed'])
     cid_pattern = re.compile("[0-9]+$")
@@ -98,7 +111,7 @@ def parse_tree(tree):
         pass
     return comments, links, collapsed
 
-def search_in_url(post_url):
+def search_in_url(post_url, markup_index = None):
     visited = set()
     loaded = set()
     unloaded = set()
@@ -111,7 +124,7 @@ def search_in_url(post_url):
             url = unloaded.pop()
             tree = tree_from_url(url)
             visited.add(url)
-            c,l,u = parse_tree(tree)
+            c,l,u = parse_tree(tree, markup_index)
             comments.update(c)
             loaded.update(l)
             unloaded.update(u)
@@ -128,5 +141,5 @@ def search_in_url(post_url):
 if __name__ == "__main__":
     from sys import argv
     from json import dumps
-    cmnts = search_in_url(argv[1])
+    cmnts = search_in_url(argv[1], int(argv[2]) if argv[2] else None)
     print (dumps(cmnts))
