@@ -34,13 +34,13 @@ markup = {
     "subject" : ".//td/h3/text()",
     "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
 },
-"//html[contains(@class, 'html-s2-no-adaptive')]":{
+"//table[contains(@class, 'standard')]":{
     "blocks": '//div[starts-with(@id, "ljcmt")]',
-    "link" : ".//span[@class='comment-datetimelink']/a[last()]/attribute::href",
-    "date" : ".//span[@class='comment-datetimelink']/a/span/text()",
+        "link" : ".//div[contains(@style, 'smaller')]/a[last()]/attribute::href",
+    "date" : ".//tr/td/span/text()",
     "text": "./div[2]//text()",
-    "user" : ".//div[@class='comment-poster-info']/span/attribute::data-ljuser",
-    "subject" : ".//div[contains(concat(' ',@class,' '),' comment-head-in ')]/h3/text()",
+    "user" : ".//td/span/a/b/text()",
+    "subject" : ".//td/h3/text()",
     "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
 },
 "//div[@class='bodyblock']":{
@@ -51,7 +51,17 @@ markup = {
     "user" : ".//span[@class='ljuser']/span/attribute::data-ljuser",
     "subject" : ".//span[@class='commentHeaderSubject']/text()",
     "collapsed" : "//div[@class='commentHolder']/div[@class='commentText']/a/attribute::href",
-}}
+},
+"//html[contains(@class, 'html-s2-no-adaptive')]":{
+    "blocks": '//div[starts-with(@id, "ljcmt")]',
+    "link" : ".//span[@class='comment-datetimelink']/a[last()]/attribute::href",
+    "date" : ".//span[@class='comment-datetimelink']/a/span/text()",
+    "text": "./div[2]//text()",
+    "user" : ".//div[@class='comment-poster-info']/span/attribute::data-ljuser",
+    "subject" : ".//div[contains(concat(' ',@class,' '),' comment-head-in ')]/h3/text()",
+    "collapsed" : "//div[starts-with(@id,'ljcmt')][not(@class='ljcmt_full')]/a/attribute::href",
+},
+}
 
 def tree_from_url(p_url):
     url = p_url.split("#")[0]
@@ -68,6 +78,7 @@ def parse_tree(tree):
     for u, m in markup.items():
         if tree.xpath(u):
             xp = m
+            print("chose " + u)
             break
     blocks = tree.xpath(xp['blocks'])
     collapsed = tree.xpath(xp['collapsed'])

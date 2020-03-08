@@ -60,6 +60,7 @@ def parse_tree(tree):
     for u, m in markup.items():
         if tree.xpath(u):
             xp = m
+            print("chose " + u)
             break
     blocks = tree.xpath(xp['blocks'])
     collapsed = tree.xpath(xp['collapsed'])
